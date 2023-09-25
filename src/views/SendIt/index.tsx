@@ -1,13 +1,14 @@
 import {useParams} from "react-router-dom";
-import {useEffect, useCallback, useState, useRef} from "react";
+import React, {useEffect, useCallback, useRef} from "react";
 import {io, Socket} from "socket.io-client"
 import {socketEvents} from "../../socket.events.ts";
+import axios from "axios";
+const axiosInstance = axios.create({withCredentials: true})
 
 export const SendIt = () => {
     const {roomId} = useParams()
-    const [fileUrls, setFileUrls] = useState<string[]>([])
 
-    const socketHandler = useRef<Socket>(io('http://localhost:3080'))
+    const socketHandler = useRef<Socket>(io())
 
     const handleSocketConnection = useCallback(() => {
         socketHandler.current.emit(socketEvents.JOIN_ROOM, roomId)
@@ -16,17 +17,23 @@ export const SendIt = () => {
         }, 500)
     }, [])
 
-    const handleFiles = (e: Event) => {
+    const handleFiles = async (e: React.FormEvent<HTMLInputElement>) => {
         const data = e.target as HTMLInputElement
         const files = data.files
-        if (files) setFileUrls(Array.from(files).map(file => URL.createObjectURL(file)))
-    }
-
-    useEffect(() => {
-        if (fileUrls.length) {
-            socketHandler.current.emit('mobileClientFileUpload', roomId, fileUrls)
+        const formData = new FormData()
+        if (files) {
+            Array.from(files).forEach(file => {
+                formData.append('files', file)
+            })
+            const res = await axiosInstance.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            console.log('res Client', res)
+            socketHandler.current.emit('mobileClientFileUpload', roomId, res.data)
         }
-    }, [fileUrls]);
+    }
 
     useEffect(() => {
         if (!socketHandler.current) return

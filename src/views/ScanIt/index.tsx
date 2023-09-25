@@ -23,7 +23,7 @@ export const ScanIt = () => {
     const [roomId, setRoomId] = useState(generateRandomID(8))
     const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
 
-    const socketHandler = useRef<Socket>(io('http://localhost:3080'))
+    const socketHandler = useRef<Socket>(io())
 
     const handleSocketConnection = () => {
         socketHandler.current.emit(socketEvents.JOIN_ROOM, roomId)
