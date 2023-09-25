@@ -3,6 +3,8 @@ export const socketEvents = {
     REC_QR_DATA: 'receiveQrData',
     GEN_QR_DATA: 'generateQrData',
     CLIENT: {
-        CONNECT: 'mobileClientConnected'
+        CONNECT: 'mobileClientConnected',
+        CLIENT_UP: 'clientUp',
+        CLIENT_DOWN: 'clientDown'
     }
 }
