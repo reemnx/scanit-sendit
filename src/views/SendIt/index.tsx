@@ -2,13 +2,13 @@ import {useParams} from "react-router-dom";
 import React, {useEffect, useCallback, useRef} from "react";
 import {io, Socket} from "socket.io-client"
 import {socketEvents} from "../../socket.events.ts";
-import axios from "axios";
-const axiosInstance = axios.create({withCredentials: true})
+import axiosInstance from '../../plugins/axios'
+import {useUploadFilesMutation} from "./hooks/useUploadFilesMutation.ts";
 
 export const SendIt = () => {
     const {roomId} = useParams()
-
     const socketHandler = useRef<Socket>(io())
+    const {mutateAsync} = useUploadFilesMutation()
 
     const handleSocketConnection = useCallback(() => {
         socketHandler.current.emit(socketEvents.JOIN_ROOM, roomId)
@@ -25,12 +25,7 @@ export const SendIt = () => {
             Array.from(files).forEach(file => {
                 formData.append('files', file)
             })
-            const res = await axiosInstance.post('/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            })
-            console.log('res Client', res)
+            const res = await mutateAsync({payload: formData})
             socketHandler.current.emit('mobileClientFileUpload', roomId, res.data)
         }
     }
@@ -40,14 +35,14 @@ export const SendIt = () => {
         handleSocketConnection()
     }, [socketHandler.current]);
 
-        useEffect(() => {
-            window.addEventListener('beforeunload', () => {
-                socketHandler.current.emit('leave-room', roomId)
-            })
-            return () => {
-                window.removeEventListener('beforeunload', () => {})
-            }
-        },[])
+    useEffect(() => {
+        window.addEventListener('beforeunload', () => {
+            socketHandler.current.emit('leave-room', roomId)
+        })
+        return () => {
+            window.removeEventListener('beforeunload', () => {})
+        }
+    },[])
 
 
     return <div className='flex flex-col'>
